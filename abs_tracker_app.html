@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Abs Tracker">
+<title>Abs Tracker — Thibarmy</title>
+<style>
+  :root {
+    --bg: #0f0f13;
+    --surface: #1a1a22;
+    --surface2: #22222e;
+    --border: rgba(255,255,255,0.08);
+    --purple: #7c6af5;
+    --purple-dim: #3d3580;
+    --purple-light: #ede9ff;
+    --blue: #4a9eff;
+    --blue-dim: #1a3d6e;
+    --green: #3ecf7a;
+    --green-dim: #1a4a32;
+    --text: #f0f0f5;
+    --text2: #9090a8;
+    --text3: #606078;
+    --red: #ff5c5c;
+    --yellow: #f5c842;
+    --radius: 14px;
+    --radius-sm: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif; font-size: 15px; min-height: 100vh; overflow-x: hidden; }
+
+  /* NAV */
+  .nav { position: sticky; top: 0; z-index: 100; background: var(--bg); border-bottom: 1px solid var(--border); padding: 12px 16px 10px; display: flex; align-items: center; justify-content: space-between; }
+  .nav-title { font-size: 17px; font-weight: 600; letter-spacing: -0.3px; }
+  .nav-sub { font-size: 12px; color: var(--text2); margin-top: 1px; }
+  .nav-btn { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 6px 12px; color: var(--text); font-size: 13px; cursor: pointer; }
+
+  /* PHASE TABS */
+  .phase-tabs { display: flex; gap: 8px; padding: 12px 16px; overflow-x: auto; scrollbar-width: none; }
+  .phase-tabs::-webkit-scrollbar { display: none; }
+  .phase-tab { flex-shrink: 0; padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid var(--border); background: var(--surface); color: var(--text2); transition: all 0.15s; }
+  .phase-tab.active-p1 { background: var(--purple-dim); border-color: var(--purple); color: var(--purple-light); }
+  .phase-tab.active-p2 { background: var(--blue-dim); border-color: var(--blue); color: #d0e8ff; }
+  .phase-tab.active-p3 { background: var(--green-dim); border-color: var(--green); color: #c0f0d8; }
+
+  /* WEEK SELECTOR */
+  .week-bar { display: flex; gap: 6px; padding: 0 16px 12px; overflow-x: auto; scrollbar-width: none; }
+  .week-bar::-webkit-scrollbar { display: none; }
+  .week-btn { flex-shrink: 0; width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface); color: var(--text2); font-size: 13px; font-weight: 500; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; position: relative; }
+  .week-btn.active { border-color: var(--purple); background: var(--purple-dim); color: var(--purple-light); }
+  .week-btn.rest { border-style: dashed; }
+  .week-btn .done-dot { position: absolute; top: 2px; right: 2px; width: 8px; height: 8px; border-radius: 50%; background: var(--green); }
+
+  /* DAY TABS */
+  .day-tabs { display: flex; gap: 6px; padding: 0 16px 14px; }
+  .day-tab { flex: 1; padding: 9px 0; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface); color: var(--text2); font-size: 13px; font-weight: 500; cursor: pointer; text-align: center; transition: all 0.15s; }
+  .day-tab.active { background: var(--surface2); border-color: rgba(255,255,255,0.2); color: var(--text); }
+  .day-tab.done-day { border-color: var(--green-dim); color: var(--green); }
+
+  /* WORKOUT BADGE */
+  .workout-badge { margin: 0 16px 14px; padding: 10px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface2); display: flex; justify-content: space-between; align-items: center; }
+  .workout-badge .label { font-size: 12px; color: var(--text2); }
+  .workout-badge .value { font-size: 14px; font-weight: 600; color: var(--purple); }
+
+  /* REST WEEK */
+  .rest-week-card { margin: 16px; padding: 24px; border-radius: var(--radius); border: 1px dashed var(--yellow); background: rgba(245,200,66,0.06); text-align: center; }
+  .rest-week-card .icon { font-size: 32px; margin-bottom: 10px; }
+  .rest-week-card h3 { font-size: 16px; font-weight: 600; color: var(--yellow); margin-bottom: 6px; }
+  .rest-week-card p { font-size: 13px; color: var(--text2); line-height: 1.5; }
+
+  /* EXERCISE CARDS */
+  .ex-list { padding: 0 16px 100px; display: flex; flex-direction: column; gap: 10px; }
+  .ex-card { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; transition: border-color 0.2s; }
+  .ex-card.completed { border-color: var(--green-dim); }
+  .ex-header { padding: 12px 14px; display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; cursor: pointer; }
+  .ex-name { font-size: 15px; font-weight: 600; line-height: 1.3; }
+  .ex-meta { font-size: 12px; color: var(--text2); margin-top: 3px; line-height: 1.4; }
+  .ex-check { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--border); background: var(--surface2); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 13px; transition: all 0.2s; }
+  .ex-check.done { background: var(--green); border-color: var(--green); color: #fff; }
+  .ex-sets { padding: 0 14px 14px; display: flex; flex-direction: column; gap: 8px; }
+  .set-row { display: grid; grid-template-columns: 28px 1fr 1fr; gap: 8px; align-items: center; }
+  .set-num { font-size: 12px; color: var(--text3); font-weight: 600; text-align: center; }
+  .set-input { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 9px 10px; font-size: 14px; color: var(--text); width: 100%; text-align: center; -webkit-appearance: none; }
+  .set-input:focus { outline: none; border-color: var(--purple); }
+  .set-input::placeholder { color: var(--text3); font-size: 13px; }
+  .set-input.filled { border-color: rgba(62,207,122,0.4); background: rgba(62,207,122,0.06); color: var(--green); }
+  .set-labels { display: grid; grid-template-columns: 28px 1fr 1fr; gap: 8px; margin-bottom: 2px; }
+  .set-label { font-size: 11px; color: var(--text3); text-align: center; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  /* PROGRESS BAR */
+  .progress-bar { height: 3px; background: var(--surface2); border-radius: 2px; margin: 0 14px 10px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--green); border-radius: 2px; transition: width 0.3s; }
+
+  /* BOTTOM TAB BAR */
+  .bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--surface); border-top: 1px solid var(--border); display: flex; padding: 8px 0 20px; z-index: 100; }
+  .bottom-tab { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; padding: 4px 0; }
+  .bottom-tab .icon { font-size: 20px; }
+  .bottom-tab .label { font-size: 10px; color: var(--text3); }
+  .bottom-tab.active .label { color: var(--purple); }
+  .bottom-tab.active .icon { filter: none; }
+
+  /* SCREENS */
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* OVERVIEW SCREEN */
+  .overview-section { padding: 16px; }
+  .section-title { font-size: 12px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px; }
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; }
+  .stat-val { font-size: 24px; font-weight: 600; }
+  .stat-label { font-size: 12px; color: var(--text2); margin-top: 2px; }
+  .phase-overview-card { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); padding: 14px; margin-bottom: 10px; cursor: pointer; }
+  .poc-header { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+  .poc-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .poc-title { font-size: 15px; font-weight: 600; }
+  .poc-weeks { font-size: 12px; color: var(--text2); margin-left: auto; }
+  .poc-desc { font-size: 13px; color: var(--text2); line-height: 1.5; }
+  .prog-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .prog-label { font-size: 13px; min-width: 60px; }
+  .prog-track { flex: 1; height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+  .prog-track-fill { height: 100%; border-radius: 3px; transition: width 0.4s; }
+  .prog-pct { font-size: 12px; color: var(--text2); min-width: 30px; text-align: right; }
+
+  /* INSTRUCTIONS */
+  .instruction-card { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); padding: 14px; margin-bottom: 10px; }
+  .inst-num { display: inline-flex; width: 22px; height: 22px; border-radius: 50%; background: var(--purple-dim); color: var(--purple-light); font-size: 11px; font-weight: 600; align-items: center; justify-content: center; margin-right: 8px; flex-shrink: 0; }
+  .inst-text { font-size: 14px; line-height: 1.5; color: var(--text2); }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<div class="nav">
+  <div>
+    <div class="nav-title">Abs Tracker</div>
+    <div class="nav-sub" id="nav-sub">Thibarmy · Phase 1</div>
+  </div>
+  <button class="nav-btn" onclick="clearTodayConfirm()">Reset day</button>
+</div>
+
+<!-- WORKOUT SCREEN -->
+<div class="screen active" id="screen-workout">
+  <div class="phase-tabs" id="phase-tabs"></div>
+  <div class="week-bar" id="week-bar"></div>
+  <div class="day-tabs" id="day-tabs"></div>
+  <div id="workout-content"></div>
+</div>
+
+<!-- OVERVIEW SCREEN -->
+<div class="screen" id="screen-overview">
+  <div class="overview-section">
+    <div class="section-title">Your progress</div>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-val" id="stat-sessions">0</div><div class="stat-label">Sessions done</div></div>
+      <div class="stat-card"><div class="stat-val" id="stat-exercises">0</div><div class="stat-label">Exercises logged</div></div>
+      <div class="stat-card"><div class="stat-val" id="stat-streak">0</div><div class="stat-label">Day streak</div></div>
+      <div class="stat-card"><div class="stat-val" id="stat-pct">0%</div><div class="stat-label">Program complete</div></div>
+    </div>
+
+    <div class="section-title" style="margin-top:4px">Phase progress</div>
+    <div id="phase-progress"></div>
+
+    <div class="section-title" style="margin-top:16px">Phases</div>
+    <div id="phase-cards"></div>
+  </div>
+</div>
+
+<!-- INFO SCREEN -->
+<div class="screen" id="screen-info">
+  <div class="overview-section">
+    <div class="section-title">How to use</div>
+    <div id="instructions"></div>
+  </div>
+</div>
+
+<!-- BOTTOM BAR -->
+<div class="bottom-bar">
+  <div class="bottom-tab active" id="tab-workout" onclick="showScreen('workout')">
+    <div class="icon">💪</div>
+    <div class="label">Workout</div>
+  </div>
+  <div class="bottom-tab" id="tab-overview" onclick="showScreen('overview')">
+    <div class="icon">📊</div>
+    <div class="label">Progress</div>
+  </div>
+  <div class="bottom-tab" id="tab-info" onclick="showScreen('info')">
+    <div class="icon">📋</div>
+    <div class="label">Guide</div>
+  </div>
+</div>
+
+<script>
+const DATA = {
+  phases: [
+    {
+      id: 1, label: 'Phase 1', weeks: [1,2,3,4],
+      style: 'Neural Programming',
+      desc: 'Same 4 exercises every session. Flex abs maximally every rep. Do at end of every lift day.',
+      days: ['Mon','Tue','Thu','Fri'],
+      restWeek: null,
+      getWorkout: (week, day) => ({
+        label: 'Phase 1 — Same every session',
+        exercises: [
+          { name: 'Swiss Ball Crunch',     method: 'Squeeze & slow',  rest: '60-75 sec', sets: getSetsP1(week,0) },
+          { name: 'Seated Knee Tuck',      method: 'Squeeze & slow',  rest: '60-75 sec', sets: getSetsP1(week,1) },
+          { name: '1-Arm Serratus Crunch', method: 'Squeeze & slow',  rest: '60-75 sec', sets: getSetsP1(week,2) },
+          { name: 'Hollow Body Hold',      method: 'Static hold',     rest: '60-75 sec', sets: getSetsP1(week,3) },
+        ]
+      })
+    },
+    {
+      id: 2, label: 'Phase 2', weeks: [5,6,7,8],
+      style: 'Accumulation',
+      desc: 'Alternate Workout A & B. A1/A2 = mechanical drop set (no rest). B1/B2 = superset (no rest).',
+      days: ['Mon','Tue','Thu','Fri'],
+      restWeek: 8,
+      getWorkout: (week, day, wo) => ({
+        label: `Workout ${wo}`,
+        exercises: wo === 'A' ? [
+          { name: 'Seated Cable Crunch (Facing)', method: 'A1 → mechanical drop set', rest: 'None → A2', sets: setsP2(week,[3,4,4]) },
+          { name: 'Standing Cable Crunch',        method: 'A2 ← mechanical drop set', rest: '75-90 sec',  sets: setsP2(week,[3,4,4]) },
+          { name: 'GHD Crunch',                   method: 'B1 → superset',            rest: 'None → B2', sets: setsP2(week,[3,3,4]) },
+          { name: 'Swiss Ball Crunch',             method: 'B2 ← superset',            rest: '75-90 sec',  sets: setsP2(week,[3,3,4]) },
+        ] : [
+          { name: 'Seated Cable Crunch (Away)',   method: 'A1 → mechanical drop set', rest: 'None → A2', sets: setsP2(week,[3,4,4]) },
+          { name: 'Standing Serratus Crunch',     method: 'A2 ← mechanical drop set', rest: '75-90 sec',  sets: setsP2(week,[3,4,4]) },
+          { name: 'V-Up',                         method: 'B1 → superset',            rest: 'None → B2', sets: setsP2(week,[3,3,4]) },
+          { name: 'Seated Knee Tuck',             method: 'B2 ← superset',            rest: '75-90 sec',  sets: setsP2(week,[3,3,4]) },
+        ]
+      })
+    },
+    {
+      id: 3, label: 'Phase 3', weeks: [9,10,11,12],
+      style: 'Intensification',
+      desc: 'Combine hypertrophy with carries. Walk slowly during carries, abs rock-hard throughout.',
+      days: ['Mon','Wed','Fri'],
+      restWeek: 12,
+      getWorkout: (week, day, wo) => ({
+        label: `Workout ${wo}`,
+        exercises: wo === 'A' ? [
+          { name: 'Swiss Ball Crunch',     method: 'A1 → superset',            rest: 'None → A2', sets: setsP2(week-8,[3,4,4]) },
+          { name: "Farmer's Walk",         method: 'A2 ← superset (30 sec)',   rest: '75-90 sec',  sets: setsP2(week-8,[3,4,4]) },
+          { name: 'Standing Cable Crunch', method: 'B1 → superset',            rest: 'None → B2', sets: setsP2(week-8,[3,3,4]) },
+          { name: 'V-Up',                  method: 'B2 ← superset',            rest: '75-90 sec',  sets: setsP2(week-8,[3,3,4]) },
+        ] : [
+          { name: 'Hollow Body Hold',      method: 'A1 → mech. drop (30-45s)', rest: 'None → A2', sets: setsP2(week-8,[3,4,4]) },
+          { name: 'Zercher Carry',         method: 'A2 ← mech. drop (30 sec)', rest: '75-90 sec',  sets: setsP2(week-8,[3,4,4]) },
+          { name: 'GHD Crunch & Raise',    method: 'B1 → superset',            rest: 'None → B2', sets: setsP2(week-8,[3,3,4]) },
+          { name: 'Swiss Ball Crunch',     method: 'B2 ← superset',            rest: '75-90 sec',  sets: setsP2(week-8,[3,3,4]) },
+        ]
+      })
+    }
+  ]
+};
+
+function getSetsP1(week, exIdx) {
+  const table = [
+    [[3,'20-30s'],[3,'20-30s'],[3,'20-30s'],[3,'20-30s']],
+    [[4,'30-40s'],[3,'30-40s'],[3,'30-40s'],[3,'30-40s']],
+    [[4,'40-50s'],[4,'40-50s'],[3,'40-50s'],[3,'40-50s']],
+    [[4,'50-60s'],[4,'50-60s'],[4,'50-60s'],[4,'50-60s']],
+  ];
+  const [n, dur] = table[week-1][exIdx];
+  return Array(n).fill(null).map((_,i) => ({ label: `Set ${i+1}`, durTarget: dur }));
+}
+
+function setsP2(weekInPhase, counts) {
+  const n = counts[Math.min(weekInPhase-1, 2)];
+  return Array(n).fill(null).map((_,i) => ({ label: `Set ${i+1}` }));
+}
+
+// State
+let curPhase = 1, curWeek = 1, curDay = 'Mon';
+let woCounters = { 1: 0, 2: 0, 3: 0 };
+
+function getWoLetter(phase, week, day) {
+  const p = DATA.phases[phase-1];
+  const days = p.days;
+  const weeksInPhase = p.weeks;
+  let idx = 0;
+  for (let w of weeksInPhase) {
+    if (w === p.restWeek) continue;
+    for (let d of days) {
+      if (w === week && d === day) return idx % 2 === 0 ? 'A' : 'B';
+      idx++;
+    }
+  }
+  return 'A';
+}
+
+function storageKey(phase, week, day, exIdx, setIdx, field) {
+  return `abs_p${phase}_w${week}_${day}_ex${exIdx}_s${setIdx}_${field}`;
+}
+
+function saveVal(key, val) { try { localStorage.setItem(key, val); } catch(e) {} }
+function loadVal(key) { try { return localStorage.getItem(key) || ''; } catch(e) { return ''; } }
+
+function isDayComplete(phase, week, day) {
+  const p = DATA.phases[phase-1];
+  if (p.restWeek === week) return true;
+  const wo = getWoLetter(phase, week, day);
+  const workout = p.getWorkout(week, day, wo);
+  return workout.exercises.every((ex, ei) =>
+    ex.sets.every((_, si) => loadVal(storageKey(phase,week,day,ei,si,'reps')).trim() !== '')
+  );
+}
+
+function isExComplete(phase, week, day, exIdx, sets) {
+  return sets.every((_, si) => loadVal(storageKey(phase,week,day,exIdx,si,'reps')).trim() !== '');
+}
+
+// Render
+function renderPhaseTabs() {
+  const el = document.getElementById('phase-tabs');
+  el.innerHTML = DATA.phases.map(p => `
+    <div class="phase-tab ${curPhase===p.id ? 'active-p'+p.id : ''}"
+         onclick="selectPhase(${p.id})">${p.label}</div>
+  `).join('');
+}
+
+function renderWeekBar() {
+  const p = DATA.phases[curPhase-1];
+  const el = document.getElementById('week-bar');
+  el.innerHTML = p.weeks.map(w => {
+    const isRest = p.restWeek === w;
+    const allDone = !isRest && p.days.every(d => isDayComplete(curPhase, w, d));
+    return `<div class="week-btn ${curWeek===w?'active':''} ${isRest?'rest':''}"
+                 onclick="selectWeek(${w})">
+      ${w}${allDone ? '<span class="done-dot"></span>' : ''}
+    </div>`;
+  }).join('');
+}
+
+function renderDayTabs() {
+  const p = DATA.phases[curPhase-1];
+  const el = document.getElementById('day-tabs');
+  el.innerHTML = p.days.map(d => {
+    const done = isDayComplete(curPhase, curWeek, d);
+    return `<div class="day-tab ${curDay===d?'active':''} ${done&&curDay!==d?'done-day':''}"
+                 onclick="selectDay('${d}')">${d}${done?' ✓':''}</div>`;
+  }).join('');
+}
+
+function renderWorkout() {
+  const p = DATA.phases[curPhase-1];
+  const content = document.getElementById('workout-content');
+
+  if (p.restWeek === curWeek) {
+    content.innerHTML = `
+      <div class="rest-week-card">
+        <div class="icon">🛑</div>
+        <h3>Abs Blitz Rest Week</h3>
+        <p>No direct abdominal work this week. This is programmed recovery — respect it. Your abs need this to grow and prepare for the next phase.</p>
+      </div>`;
+    return;
+  }
+
+  const wo = curPhase > 1 ? getWoLetter(curPhase, curWeek, curDay) : null;
+  const workout = p.getWorkout(curWeek, curDay, wo);
+
+  let html = '';
+  if (wo) {
+    html += `<div class="workout-badge">
+      <span class="label">Today's workout</span>
+      <span class="value">Workout ${wo}</span>
+    </div>`;
+  }
+
+  html += '<div class="ex-list">';
+  workout.exercises.forEach((ex, ei) => {
+    const complete = isExComplete(curPhase, curWeek, curDay, ei, ex.sets);
+    const totalSets = ex.sets.length;
+    const doneSets = ex.sets.filter((_,si) => loadVal(storageKey(curPhase,curWeek,curDay,ei,si,'reps')).trim()!=='').length;
+    const pct = totalSets > 0 ? Math.round(doneSets/totalSets*100) : 0;
+
+    const isCarry = ex.name.includes('Walk') || ex.name.includes('Carry');
+    const isDur = ex.method.includes('sec') || ex.name.includes('Hold');
+    const wPlaceholder = isCarry ? 'lbs/kg' : isDur ? 'difficulty' : 'weight';
+    const rPlaceholder = isCarry || isDur ? 'duration' : 'reps done';
+
+    html += `<div class="ex-card ${complete?'completed':''}" id="ex-${ei}">
+      <div class="ex-header" onclick="toggleEx(${ei})">
+        <div>
+          <div class="ex-name">${ex.name}</div>
+          <div class="ex-meta">${ex.method} &nbsp;·&nbsp; Rest: ${ex.rest}</div>
+        </div>
+        <div class="ex-check ${complete?'done':''}">${complete?'✓':''}</div>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+      <div class="ex-sets" id="sets-${ei}">
+        <div class="set-labels"><div></div><div class="set-label">${wPlaceholder}</div><div class="set-label">${rPlaceholder}</div></div>`;
+
+    ex.sets.forEach((set, si) => {
+      const wtKey = storageKey(curPhase,curWeek,curDay,ei,si,'wt');
+      const rpKey = storageKey(curPhase,curWeek,curDay,ei,si,'reps');
+      const wt = loadVal(wtKey);
+      const rp = loadVal(rpKey);
+      const durLabel = set.durTarget ? `Target: ${set.durTarget}` : '';
+      html += `
+        <div class="set-row">
+          <div class="set-num">${si+1}</div>
+          <input class="set-input ${wt?'filled':''}" type="text" inputmode="decimal"
+            placeholder="${wt?wt:durLabel||wPlaceholder}"
+            value="${wt}"
+            onchange="saveInput(${ei},${si},'wt',this)"
+            oninput="this.classList.toggle('filled',this.value.trim()!=='')">
+          <input class="set-input ${rp?'filled':''}" type="text" inputmode="decimal"
+            placeholder="${rp||rPlaceholder}"
+            value="${rp}"
+            onchange="saveInput(${ei},${si},'reps',this)"
+            oninput="this.classList.toggle('filled',this.value.trim()!=='')">
+        </div>`;
+    });
+
+    html += `</div></div>`;
+  });
+
+  html += '</div>';
+  content.innerHTML = html;
+}
+
+function saveInput(ei, si, field, input) {
+  const key = storageKey(curPhase, curWeek, curDay, ei, si, field);
+  saveVal(key, input.value.trim());
+  refreshExCard(ei);
+  renderWeekBar();
+  renderDayTabs();
+}
+
+function refreshExCard(ei) {
+  const p = DATA.phases[curPhase-1];
+  const wo = curPhase > 1 ? getWoLetter(curPhase, curWeek, curDay) : null;
+  const workout = p.getWorkout(curWeek, curDay, wo);
+  const ex = workout.exercises[ei];
+  const complete = isExComplete(curPhase, curWeek, curDay, ei, ex.sets);
+  const doneSets = ex.sets.filter((_,si)=>loadVal(storageKey(curPhase,curWeek,curDay,ei,si,'reps')).trim()!=='').length;
+  const pct = Math.round(doneSets/ex.sets.length*100);
+
+  const card = document.getElementById(`ex-${ei}`);
+  if (!card) return;
+  card.classList.toggle('completed', complete);
+  const check = card.querySelector('.ex-check');
+  check.classList.toggle('done', complete);
+  check.textContent = complete ? '✓' : '';
+  const fill = card.querySelector('.progress-fill');
+  fill.style.width = pct + '%';
+}
+
+function toggleEx(ei) {
+  const sets = document.getElementById(`sets-${ei}`);
+  if (sets) sets.style.display = sets.style.display === 'none' ? '' : 'none';
+}
+
+function selectPhase(id) {
+  curPhase = id;
+  curWeek = DATA.phases[id-1].weeks[0];
+  curDay  = DATA.phases[id-1].days[0];
+  renderAll();
+  document.getElementById('nav-sub').textContent = `Thibarmy · Phase ${id}`;
+}
+function selectWeek(w) { curWeek = w; renderWeekBar(); renderDayTabs(); renderWorkout(); }
+function selectDay(d)  { curDay  = d; renderDayTabs(); renderWorkout(); }
+
+function renderAll() {
+  renderPhaseTabs(); renderWeekBar(); renderDayTabs(); renderWorkout();
+}
+
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.bottom-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  document.getElementById('tab-'+name).classList.add('active');
+  if (name === 'overview') renderOverview();
+  if (name === 'info') renderInfo();
+}
+
+function renderOverview() {
+  let sessions = 0, exercises = 0, totalEx = 0;
+  DATA.phases.forEach(p => {
+    p.weeks.forEach(w => {
+      if (p.restWeek === w) return;
+      p.days.forEach(d => {
+        const wo = p.id > 1 ? getWoLetter(p.id, w, d) : null;
+        const workout = p.getWorkout(w, d, wo);
+        totalEx += workout.exercises.length;
+        const dayDone = workout.exercises.every((ex,ei) =>
+          ex.sets.every((_,si) => loadVal(storageKey(p.id,w,d,ei,si,'reps')).trim()!==''));
+        if (dayDone) sessions++;
+        workout.exercises.forEach((ex,ei) => {
+          if (isExComplete(p.id,w,d,ei,ex.sets)) exercises++;
+        });
+      });
+    });
+  });
+
+  document.getElementById('stat-sessions').textContent = sessions;
+  document.getElementById('stat-exercises').textContent = exercises;
+  document.getElementById('stat-pct').textContent = Math.round(exercises/totalEx*100)+'%';
+  document.getElementById('stat-streak').textContent = sessions > 0 ? '🔥 '+sessions : '0';
+
+  const progEl = document.getElementById('phase-progress');
+  const colors = ['#7c6af5','#4a9eff','#3ecf7a'];
+  progEl.innerHTML = DATA.phases.map((p,pi) => {
+    let done = 0, total = 0;
+    p.weeks.forEach(w => {
+      if (p.restWeek === w) return;
+      p.days.forEach(d => {
+        const wo = p.id > 1 ? getWoLetter(p.id, w, d) : null;
+        const workout = p.getWorkout(w, d, wo);
+        workout.exercises.forEach((ex,ei) => {
+          total++;
+          if (isExComplete(p.id,w,d,ei,ex.sets)) done++;
+        });
+      });
+    });
+    const pct = total > 0 ? Math.round(done/total*100) : 0;
+    return `<div class="prog-row">
+      <div class="prog-label" style="font-size:13px">${p.label}</div>
+      <div class="prog-track"><div class="prog-track-fill" style="width:${pct}%;background:${colors[pi]}"></div></div>
+      <div class="prog-pct">${pct}%</div>
+    </div>`;
+  }).join('');
+
+  const cardsEl = document.getElementById('phase-cards');
+  const dots = ['#7c6af5','#4a9eff','#3ecf7a'];
+  cardsEl.innerHTML = DATA.phases.map((p,pi) => `
+    <div class="phase-overview-card" onclick="selectPhase(${p.id});showScreen('workout')">
+      <div class="poc-header">
+        <div class="poc-dot" style="background:${dots[pi]}"></div>
+        <div class="poc-title">${p.label} — ${p.style}</div>
+        <div class="poc-weeks">Wk ${p.weeks[0]}–${p.weeks[p.weeks.length-1]}</div>
+      </div>
+      <div class="poc-desc">${p.desc}</div>
+    </div>
+  `).join('');
+}
+
+function renderInfo() {
+  const steps = [
+    ['Pick your phase', 'Tap the Phase 1, 2, or 3 tab at the top. Phase 1 = Weeks 1–4, Phase 2 = Weeks 5–8, Phase 3 = Weeks 9–12.'],
+    ['Select your week & day', 'Tap the week number then tap your training day (Mon, Tue, etc.).'],
+    ['Log your sets', 'For each exercise, enter the weight (or difficulty rating for Phase 1) and the reps done — or duration if it\'s a hold or carry.'],
+    ['Watch the checkmarks', 'Each exercise auto-checks when all sets are filled. The day tab shows ✓ when the full session is done.'],
+    ['Phase 1 tip', 'No weight needed — rate the tension quality 1–5 in the weight column. The goal is maximum contraction, not reps.'],
+    ['Carries (Phase 3)', 'Log the weight used in the weight column. Walk slowly — abs squeezed the entire time.'],
+    ['Rest weeks', 'Week 8 (Phase 2) and Week 12 (Phase 3) are Abs Blitz Rest weeks. No ab work — this is programmed recovery.'],
+    ['Add to home screen', 'In Safari, tap the Share button ↑ then "Add to Home Screen" for a full-screen app icon on your iPhone.'],
+  ];
+  document.getElementById('instructions').innerHTML = steps.map(([title, text], i) => `
+    <div class="instruction-card" style="margin-bottom:10px">
+      <div style="display:flex;align-items:flex-start;gap:8px">
+        <span class="inst-num">${i+1}</span>
+        <div>
+          <div style="font-size:14px;font-weight:600;margin-bottom:4px">${title}</div>
+          <div class="inst-text">${text}</div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function clearTodayConfirm() {
+  if (!confirm(`Clear all logged data for ${curDay}, Week ${curWeek}?`)) return;
+  const p = DATA.phases[curPhase-1];
+  const wo = curPhase > 1 ? getWoLetter(curPhase, curWeek, curDay) : null;
+  const workout = p.getWorkout(curWeek, curDay, wo);
+  workout.exercises.forEach((ex, ei) => {
+    ex.sets.forEach((_, si) => {
+      localStorage.removeItem(storageKey(curPhase,curWeek,curDay,ei,si,'wt'));
+      localStorage.removeItem(storageKey(curPhase,curWeek,curDay,ei,si,'reps'));
+    });
+  });
+  renderAll();
+}
+
+renderAll();
+</script>
+</body>
+</html>

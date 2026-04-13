@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Max Definition">
+<title>Maximum Definition Tracker</title>
+<style>
+:root{
+  --bg:#0d0d12;--s1:#161620;--s2:#1e1e2a;--s3:#252535;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
+  --text:#ededf5;--text2:#8888a8;--text3:#50506a;
+  --red:#e8453c;--red-d:#5a1a18;--red-l:#ffd5d3;
+  --blue:#3d8ef0;--blue-d:#142d52;--blue-l:#cde0ff;
+  --green:#30c46a;--green-d:#0f3d24;--green-l:#c0f0d4;
+  --yellow:#f0b429;--yellow-d:#3d2e08;
+  --r:14px;--rs:9px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;font-size:15px;min-height:100vh;overflow-x:hidden;}
+button,input{font-family:inherit;font-size:inherit;}
+/* ── NAV ── */
+.nav{position:sticky;top:0;z-index:200;background:var(--bg);border-bottom:1px solid var(--border);padding:10px 16px 8px;display:flex;align-items:center;justify-content:space-between;}
+.nav-title{font-size:17px;font-weight:700;letter-spacing:-.4px;}
+.nav-sub{font-size:11px;color:var(--text2);margin-top:1px;}
+.nav-icon-btn{width:34px;height:34px;border-radius:50%;border:1px solid var(--border);background:var(--s2);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:15px;color:var(--text2);}
+/* ── BOTTOM BAR ── */
+.bottom-bar{position:fixed;bottom:0;left:0;right:0;background:var(--s1);border-top:1px solid var(--border);display:grid;grid-template-columns:repeat(4,1fr);padding:6px 0 22px;z-index:200;}
+.btab{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:4px 0;}
+.btab .ico{font-size:20px;line-height:1;}
+.btab .lbl{font-size:10px;color:var(--text3);}
+.btab.active .lbl{color:var(--red);}
+/* ── SCREENS ── */
+.screen{display:none;padding-bottom:90px;}
+.screen.active{display:block;}
+/* ── BLOCK TABS ── */
+.block-tabs{display:flex;gap:8px;padding:12px 16px 6px;overflow-x:auto;scrollbar-width:none;}
+.block-tabs::-webkit-scrollbar{display:none;}
+.btblock{flex-shrink:0;padding:7px 16px;border-radius:20px;font-size:13px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:var(--s2);color:var(--text2);transition:all .15s;}
+.btblock.ab1{background:var(--red-d);border-color:var(--red);color:var(--red-l);}
+.btblock.ab2{background:var(--blue-d);border-color:var(--blue);color:var(--blue-l);}
+.btblock.ab3{background:var(--green-d);border-color:var(--green);color:var(--green-l);}
+/* ── WEEK BAR ── */
+.week-bar{display:flex;gap:6px;padding:8px 16px;overflow-x:auto;scrollbar-width:none;}
+.week-bar::-webkit-scrollbar{display:none;}
+.wbtn{flex-shrink:0;width:40px;height:40px;border-radius:50%;border:1px solid var(--border);background:var(--s2);color:var(--text2);font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative;transition:all .15s;}
+.wbtn.active{background:var(--red-d);border-color:var(--red);color:var(--red-l);}
+.wbtn .wdot{position:absolute;top:1px;right:1px;width:8px;height:8px;border-radius:50%;background:var(--green);}
+/* ── DAY TABS ── */
+.day-tabs{display:flex;gap:6px;padding:6px 16px 10px;}
+.dtab{flex:1;padding:8px 0;border-radius:var(--rs);border:1px solid var(--border);background:var(--s2);color:var(--text2);font-size:13px;font-weight:500;cursor:pointer;text-align:center;transition:all .15s;}
+.dtab.active{background:var(--s3);border-color:var(--border2);color:var(--text);}
+.dtab.done-day{border-color:rgba(48,196,106,.35);color:var(--green);}
+/* ── INFO BAR ── */
+.info-bar{margin:0 16px 12px;padding:10px 14px;border-radius:var(--rs);background:var(--s2);border:1px solid var(--border);font-size:12px;color:var(--text2);line-height:1.5;}
+.info-bar strong{color:var(--text);font-weight:600;}
+/* ── EXERCISE LIST ── */
+.ex-list{padding:0 16px 8px;display:flex;flex-direction:column;gap:10px;}
+.ex-card{background:var(--s1);border-radius:var(--r);border:1px solid var(--border);overflow:hidden;transition:border-color .2s;}
+.ex-card.done{border-color:rgba(48,196,106,.4);}
+.ex-hdr{padding:12px 14px 10px;display:flex;align-items:flex-start;justify-content:space-between;gap:10px;cursor:pointer;user-select:none;}
+.ex-name{font-size:15px;font-weight:600;line-height:1.3;}
+.ex-meta{font-size:12px;color:var(--text2);margin-top:3px;}
+.ex-check{width:26px;height:26px;border-radius:50%;border:2px solid var(--border2);background:var(--s2);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px;font-weight:700;color:var(--text3);transition:all .2s;}
+.ex-check.ok{background:var(--green);border-color:var(--green);color:#fff;}
+/* progress bar */
+.pbar{height:2px;background:var(--s3);margin:0;}
+.pbar-fill{height:100%;background:var(--green);transition:width .3s;}
+/* sets */
+.sets-wrap{padding:8px 14px 14px;}
+.set-col-hdrs{display:grid;grid-template-columns:24px 1fr 1fr;gap:8px;margin-bottom:4px;}
+.set-col-hdr{font-size:10px;color:var(--text3);text-align:center;text-transform:uppercase;letter-spacing:.5px;}
+.set-row{display:grid;grid-template-columns:24px 1fr 1fr;gap:8px;align-items:center;margin-bottom:7px;}
+.set-row:last-child{margin-bottom:0;}
+.set-num{font-size:11px;color:var(--text3);font-weight:700;text-align:center;}
+.set-inp{background:var(--s2);border:1px solid var(--border);border-radius:var(--rs);padding:9px 8px;font-size:14px;color:var(--text);width:100%;text-align:center;-webkit-appearance:none;}
+.set-inp:focus{outline:none;border-color:var(--red);}
+.set-inp.filled{border-color:rgba(48,196,106,.45);background:rgba(48,196,106,.07);color:var(--green);}
+/* ── NUTRITION ── */
+.nutr-section{padding:0 16px;}
+.nutr-date-bar{display:flex;align-items:center;justify-content:space-between;padding:10px 16px 6px;}
+.nutr-date-lbl{font-size:15px;font-weight:600;}
+.date-nav{display:flex;gap:6px;}
+.date-nav button{width:34px;height:34px;border-radius:50%;border:1px solid var(--border);background:var(--s2);color:var(--text);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;}
+.macro-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px;}
+.macro-card{background:var(--s2);border:1px solid var(--border);border-radius:var(--rs);padding:10px 8px;text-align:center;}
+.macro-val{font-size:20px;font-weight:700;}
+.macro-lbl{font-size:11px;color:var(--text2);margin-top:2px;}
+.macro-cal .macro-val{color:var(--yellow);}
+.nutr-fields{display:flex;flex-direction:column;gap:10px;margin-bottom:14px;}
+.nutr-row{display:grid;grid-template-columns:90px 1fr;gap:10px;align-items:center;}
+.nutr-lbl{font-size:13px;color:var(--text2);}
+.nutr-inp{background:var(--s2);border:1px solid var(--border);border-radius:var(--rs);padding:10px 12px;font-size:14px;color:var(--text);width:100%;-webkit-appearance:none;}
+.nutr-inp:focus{outline:none;border-color:var(--red);}
+.nutr-inp.filled{border-color:rgba(48,196,106,.4);background:rgba(48,196,106,.06);}
+.junk-row{display:flex;align-items:center;justify-content:space-between;background:var(--s2);border:1px solid var(--border);border-radius:var(--rs);padding:12px 14px;}
+.toggle-track{width:44px;height:26px;border-radius:13px;border:none;cursor:pointer;position:relative;transition:background .2s;}
+.toggle-track.on{background:var(--green);}
+.toggle-track.off{background:var(--s3);}
+.toggle-thumb{width:20px;height:20px;border-radius:50%;background:#fff;position:absolute;top:3px;transition:left .2s;}
+.toggle-track.on .toggle-thumb{left:21px;}
+.toggle-track.off .toggle-thumb{left:3px;}
+/* ── PROGRESS / CHART ── */
+.prog-section{padding:0 16px;}
+.prog-stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+.pstat{background:var(--s2);border:1px solid var(--border);border-radius:var(--rs);padding:12px 14px;}
+.pstat-val{font-size:26px;font-weight:700;}
+.pstat-lbl{font-size:12px;color:var(--text2);margin-top:2px;}
+.chart-card{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:16px;}
+.chart-title{font-size:13px;font-weight:600;color:var(--text2);margin-bottom:12px;}
+.chart-wrap{position:relative;height:180px;}
+.section-hdr{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;}
+.lift-table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:16px;}
+.lift-table th{text-align:left;color:var(--text3);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;padding:0 6px 8px;border-bottom:1px solid var(--border);}
+.lift-table td{padding:9px 6px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.lift-table td:last-child{text-align:right;font-weight:600;color:var(--green);}
+.lift-table tr:last-child td{border-bottom:none;}
+/* ── SECTION HEADINGS ── */
+.sec-title{font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin:0 16px 10px;}
+</style>
+</head>
+<body>
+
+<div class="nav">
+  <div>
+    <div class="nav-title">Maximum Definition</div>
+    <div class="nav-sub" id="nav-sub">Block 1 · Week 1</div>
+  </div>
+  <div class="nav-icon-btn" onclick="showResetConfirm()" title="Reset day">↺</div>
+</div>
+
+<!-- ═══ WORKOUT SCREEN ═══ -->
+<div class="screen active" id="screen-workout">
+  <div class="block-tabs" id="block-tabs"></div>
+  <div class="week-bar"   id="week-bar"></div>
+  <div class="day-tabs"   id="day-tabs"></div>
+  <div class="info-bar"   id="info-bar"></div>
+  <div class="ex-list"    id="ex-list"></div>
+</div>
+
+<!-- ═══ NUTRITION SCREEN ═══ -->
+<div class="screen" id="screen-nutrition">
+  <div class="nutr-date-bar">
+    <div class="nutr-date-lbl" id="nutr-date-lbl">Today</div>
+    <div class="date-nav">
+      <button onclick="shiftNutrDay(-1)">‹</button>
+      <button onclick="shiftNutrDay(1)">›</button>
+    </div>
+  </div>
+  <div class="nutr-section">
+    <div class="macro-grid">
+      <div class="macro-card macro-cal"><div class="macro-val" id="m-cal">—</div><div class="macro-lbl">Calories</div></div>
+      <div class="macro-card"><div class="macro-val" id="m-pro" style="color:var(--red)">—</div><div class="macro-lbl">Protein g</div></div>
+      <div class="macro-card"><div class="macro-val" id="m-car" style="color:var(--blue)">—</div><div class="macro-lbl">Carbs g</div></div>
+      <div class="macro-card"><div class="macro-val" id="m-fat" style="color:var(--yellow)">—</div><div class="macro-lbl">Fat g</div></div>
+    </div>
+    <div class="nutr-fields">
+      <div class="nutr-row"><div class="nutr-lbl">Weight</div><input class="nutr-inp" id="n-weight" type="number" inputmode="decimal" step="0.1" placeholder="lbs / kg" onchange="saveNutr()" oninput="onNutrInput(this)"></div>
+      <div class="nutr-row"><div class="nutr-lbl">Protein (g)</div><input class="nutr-inp" id="n-pro" type="number" inputmode="decimal" placeholder="grams" onchange="saveNutr()" oninput="onNutrInput(this)"></div>
+      <div class="nutr-row"><div class="nutr-lbl">Carbs (g)</div><input class="nutr-inp" id="n-car" type="number" inputmode="decimal" placeholder="grams" onchange="saveNutr()" oninput="onNutrInput(this)"></div>
+      <div class="nutr-row"><div class="nutr-lbl">Fat (g)</div><input class="nutr-inp" id="n-fat" type="number" inputmode="decimal" placeholder="grams" onchange="saveNutr()" oninput="onNutrInput(this)"></div>
+      <div class="nutr-row"><div class="nutr-lbl">Water (oz)</div><input class="nutr-inp" id="n-water" type="number" inputmode="decimal" placeholder="oz" onchange="saveNutr()" oninput="onNutrInput(this)"></div>
+      <div class="nutr-row"><div class="nutr-lbl">Notes</div><input class="nutr-inp" id="n-notes" type="text" placeholder="meals, thoughts..." onchange="saveNutr()"></div>
+    </div>
+    <div class="junk-row">
+      <div>
+        <div style="font-size:14px;font-weight:600">Junk-free today?</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:2px">Real food only — no processed junk</div>
+      </div>
+      <button class="toggle-track off" id="junk-toggle" onclick="toggleJunk()">
+        <div class="toggle-thumb"></div>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PROGRESS SCREEN ═══ -->
+<div class="screen" id="screen-progress">
+  <div style="padding:12px 16px 0">
+    <div class="prog-stat-grid" id="prog-stats"></div>
+    <div class="chart-card">
+      <div class="chart-title">Body weight (daily)</div>
+      <div class="chart-wrap"><canvas id="weight-chart"></canvas></div>
+    </div>
+    <div class="section-hdr">Top lifts — best weight logged</div>
+    <table class="lift-table" id="lift-table"></table>
+  </div>
+</div>
+
+<!-- ═══ GUIDE SCREEN ═══ -->
+<div class="screen" id="screen-guide">
+  <div style="padding:12px 16px 0" id="guide-content"></div>
+</div>
+
+<!-- ═══ BOTTOM BAR ═══ -->
+<div class="bottom-bar">
+  <div class="btab active" id="tab-workout"    onclick="showScreen('workout')"><div class="ico">🏋</div><div class="lbl">Workout</div></div>
+  <div class="btab"        id="tab-nutrition"  onclick="showScreen('nutrition')"><div class="ico">🥩</div><div class="lbl">Nutrition</div></div>
+  <div class="btab"        id="tab-progress"   onclick="showScreen('progress')"><div class="ico">📈</div><div class="lbl">Progress</div></div>
+  <div class="btab"        id="tab-guide"      onclick="showScreen('guide')"><div class="ico">📋</div><div class="lbl">Guide</div></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+const BLOCKS = [[{"week": 1, "rest": "2 min active (walk during rest)", "cardio": "Wed/Sat: 30 min Zone 2", "days": [{"day": "Mon", "muscle": "Quads / Pecs / Delts / Tris", "exercises": [{"name": "Hack Squat Machine", "sets": 4, "reps": "10-8-6-15"}, {"name": "Incline DB Press", "sets": 4, "reps": "10-8-6-15"}, {"name": "Shoulder-Width Long Pull", "sets": 4, "reps": "10-8-6-15"}, {"name": "Dips", "sets": 4, "reps": "10-8-6-15"}, {"name": "DB Lateral Raises", "sets": 4, "reps": "10-8-6-15"}, {"name": "Seated Cable Flies", "sets": 4, "reps": "10-8-6-15"}, {"name": "Overhead Cable Triceps Extension", "sets": 4, "reps": "10-8-6-15"}]}, {"day": "Tue", "muscle": "Hams / Upper Back / Lats / Biceps", "exercises": [{"name": "Romanian Deadlift", "sets": 4, "reps": "10-8-6-15"}, {"name": "Seated Row to Clavicle (rope)", "sets": 4, "reps": "10-8-6-15"}, {"name": "Race Bike Rows", "sets": 4, "reps": "10-8-6-15"}, {"name": "Preacher Curls", "sets": 4, "reps": "10-8-6-15"}, {"name": "Straight-Arms Pulldown", "sets": 4, "reps": "10-8-6-15"}, {"name": "DB Hammer Curls", "sets": 4, "reps": "10-8-6-15"}, {"name": "DB Shrugs", "sets": 4, "reps": "10-8-6-15"}]}, {"day": "Thu", "muscle": "Quads / Pecs / Delts / Tris", "exercises": [{"name": "Leg Extension", "sets": 4, "reps": "10-8-6-15"}, {"name": "DB Power Flies", "sets": 4, "reps": "10-8-6-15"}, {"name": "Scott Press", "sets": 4, "reps": "10-8-6-15"}, {"name": "Close-Grip Bench Press", "sets": 4, "reps": "10-8-6-15"}, {"name": "Gironda Lateral Swing", "sets": 4, "reps": "10-8-6-15"}, {"name": "Cable Cross-Over", "sets": 4, "reps": "10-8-6-15"}, {"name": "Rope Triceps Pressdown", "sets": 4, "reps": "10-8-6-15"}]}, {"day": "Fri", "muscle": "Hams / Upper Back / Lats / Biceps", "exercises": [{"name": "Seated Leg Curl", "sets": 4, "reps": "10-8-6-15"}, {"name": "Chest-Supported T-Bar Row", "sets": 4, "reps": "10-8-6-15"}, {"name": "Shoulder-Width Pronated Lat Pulldown", "sets": 4, "reps": "10-8-6-15"}, {"name": "Barbell Curls", "sets": 4, "reps": "10-8-6-15"}, {"name": "Bent Over Laterals", "sets": 4, "reps": "10-8-6-15"}, {"name": "Cable Reverse Curls", "sets": 4, "reps": "10-8-6-15"}, {"name": "Cable Narrow Grip Upright Row", "sets": 4, "reps": "10-8-6-15"}]}]}, {"week": 2, "rest": "90 sec active", "cardio": "Wed/Sat: 35 min Zone 2", "days": [{"day": "Mon", "muscle": "Quads / Pecs / Delts / Tris", "exercises": [{"name": "Hack Squat Machine", "sets": 4, "reps": "10-8-6-15"}, {"name": "Incline DB Press", "sets": 4, "reps": "10-8-6-15"}, {"name": "Shoulder-Width Long Pull", "sets": 4, "reps": "10-8-6-15"}, {"name": "Dips", "sets": 4, "reps": "10-8-6-15"}, {"name": "DB Lateral Raises", "sets": 4, "reps": "10-8-6-15"}, {"name": "Seated Cable Flies", "sets": 4, "reps": "10-8-6-15"}, {"name": "Overhead Cable Triceps Extension", "sets": 4, "reps": "10-8-6-15"}]}, {"day": "Tue", "muscle": "Hams / Upper Back / Lats / Biceps", "exercises": [{"name": "Romanian Deadlift", "sets": 4, "reps": "10-8-6-15"}, {"name": "Seated Row to Clavicle (rope)", "sets": 4, "reps": "10-8-6-15"}, {"name": "Race Bike Rows", "sets": 4, "reps": "10-8-6-15"}, {"name": "Preacher Curls", "sets": 4, "reps": "10-8-6-15"}, {"name": "Straight-Arms Pulldown", "sets": 4, "reps": "10-8-6-15"}, {"name": "DB Hammer Curls", "sets": 4, "reps": "10-8-6-15"}, {"name": "DB Shrugs", "sets": 4, "reps": "10-8-6-15"}]}, {"day": "Thu", "muscle": "Quads / Pecs / Delts / Tris", "exercises": [{"name": "Leg Extension", "sets": 4, "reps": "10-8-6-15"}, {"name": "DB Power Flies", "sets": 4, "reps": "10-8-6-15"}, {"name": "Scott Press", "sets": 4, "reps": "10-8-6-15"}, {"name": "Close-Grip Bench Press", "sets": 4, "reps": "10-8-6-15"}, {"name": "Gironda Lateral Swing", "sets": 4, "reps": "10-8-6-15"}, {"name": "Cable Cross-Over", "sets": 4, "reps": "10-8-6-15"}, {"name": "Rope Triceps Pressdown", "sets": 4, "reps": "10-8-6-15"}]}, {"day": "Fri", "muscle": "Hams / Upper Back / Lats / Biceps", "exercises": [{"name": "Seated Leg Curl", "sets": 4, "reps": "10-8-6-15"}, {"name": "Chest-Supported T-Bar Row", "sets": 4, "reps": "10-8-6-15"}, {"name": "Shoulder-Width Pronated Lat Pulldown", "sets": 4, "reps": "10-8-6-15"}, {"name": "Barbell Curls", "sets": 4, "reps": "10-8-6-15"}, {"name": "Bent Over Laterals", "sets": 4, "reps": "10-8-6-15"}, {"name": "Cable Reverse Curls", "sets": 4, "reps": "10-8-6-15"}, {"name": "Cable Narrow Grip Upright Row", "sets": 4, "reps": "10-8-6-15"}]}]}, {"week": 3, "rest": "75 sec active", "cardio": "Wed/Sat: 40 min Zone 2", "days": [{"day": "Mon", "muscle": "Quads / Pecs / Delts / Tris", "exercises": [{"name": "Hack Squat Machine", "sets": 4, "reps": "10-8-6-15"}, {"name": "Incline DB Press", "sets": 4, "reps": "10-8-6-15"}, {"name": "Shoulder-Width Long Pull", "sets": 4, "reps": "10-8-6-15"}, {"name": "Dips", "sets": 4, "reps": "10-8-6-15"}, {"name": "DB Lateral Raises", "sets": 4, "reps": "10-8-6-15"}, {"name": "Seated Cable Flies", "sets": 4, "reps": "10-8-6-15"}, {"name": "Overhead Cable Triceps Extension", "sets": 4, "reps": "10-8-6-15"}]}, {"day": "Tue", "muscle": "Hams / Upper Back / Lats / Biceps", "exercises": [{"name": "Romanian Deadlift", "sets": 4, "reps": "10-8-6-15"}, {"name": "Seated Row to Clavicle (rope)", "sets": 4, "reps": "10-8-6-15"}, {"name": "Race Bike Rows", "sets": 4, "reps": "10-8-6-15"}, {"name": "Preacher Curls", "sets": 4, "reps": "10-8-6-15"}, {"name": "Straight-Arms Pulldown", "sets": 4, "reps": "10-8-6-15"}, {"name": "DB Hammer Curls", "sets": 4, "reps": "10-8-6-15"}, {"name": "DB Shrugs", "sets": 4, "reps": "10-8-6-15"}]}, {"day": "Thu", "muscle": "Quads / Pecs / Delts / Tris", "exercises": [{"name": "Leg Extension", "sets": 4, "reps": "10-8-6-15"}, {"name": "DB Power Flies", "sets": 4, "reps": "10-8-6-15"}, {"name": "Scott Press", "sets": 4, "reps": "10-8-6-15"}, {"name": "Close-Grip Bench Press", "sets": 4, "reps": "10-8-6-15"}, {"name": "Gironda Lateral Swing", "sets": 4, "reps": "10-8-6-15"}, {"name": "Cable Cross-Over", "sets": 4, "reps": "10-8-6-15"}, {"name": "Rope Triceps Pressdown", "sets": 4, "reps": "10-8-6-15"}]}, {"day": "Fri", "muscle": "Hams / Upper Back / Lats / Biceps", "exercises": [{"name": "Seated Leg Curl", "sets": 4, "reps": "10-8-6-15"}, {"name": "Chest-Supported T-Bar Row", "sets": 4, "reps": "10-8-6-15"}, {"name": "Shoulder-Width Pronated Lat Pulldown", "sets": 4, "reps": "10-8-6-15"}, {"name": "Barbell Curls", "sets": 4, "reps": "10-8-6-15"}, {"name": "Bent Over Laterals", "sets": 4, "reps": "10-8-6-15"}, {"name": "Cable Reverse Curls", "sets": 4, "reps": "10-8-6-15"}, {"name": "Cable Narrow Grip Upright Row", "sets": 4, "reps": "10-8-6-15"}]}]}, {"week": 4, "rest": "60 sec active", "cardio": "Wed/Sat: 45 min Zone 2", "days": [{"day": "Mon", "muscle": "Quads / Pecs / Delts / Tris", "exercises": [{"name": "Hack Squat Machine", "sets": 4, "reps": "10-8-6-15"}, {"name": "Incline DB Press", "sets": 4, "reps": "10-8-6-15"}, {"name": "Shoulder-Width Long Pull", "sets": 4, "reps": "10-8-6-15"}, {"name": "Dips", "sets": 4, "reps": "10-8-6-15"}, {"name": "DB Lateral Raises", "sets": 4, "reps": "10-8-6-15"}, {"name": "Seated Cable Flies", "sets": 4, "reps": "10-8-6-15"}, {"name": "Overhead Cable Triceps Extension", "sets": 4, "reps": "10-8-6-15"}]}, {"day": "Tue", "muscle": "Hams / Upper Back / Lats / Biceps", "exercises": [{"name": "Romanian Deadlift", "sets": 4, "reps": "10-8-6-15"}, {"name": "Seated Row to Clavicle (rope)", "sets": 4, "reps": "10-8-6-15"}, {"name": "Race Bike Rows", "sets": 4, "reps": "10-8-6-15"}, {"name": "Preacher Curls", "sets": 4, "reps": "10-8-6-15"}, {"name": "Straight-Arms Pulldown", "sets": 4, "reps": "10-8-6-15"}, {"name": "DB Hammer Curls", "sets": 4, "reps": "10-8-6-15"}, {"name": "DB Shrugs", "sets": 4, "reps": "10-8-6-15"}]}, {"day": "Thu", "muscle": "Quads / Pecs / Delts / Tris", "exercises": [{"name": "Leg Extension", "sets": 4, "reps": "10-8-6-15"}, {"name": "DB Power Flies", "sets": 4, "reps": "10-8-6-15"}, {"name": "Scott Press", "sets": 4, "reps": "10-8-6-15"}, {"name": "Close-Grip Bench Press", "sets": 4, "reps": "10-8-6-15"}, {"name": "Gironda Lateral Swing", "sets": 4, "reps": "10-8-6-15"}, {"name": "Cable Cross-Over", "sets": 4, "reps": "10-8-6-15"}, {"name": "Rope Triceps Pressdown", "sets": 4, "reps": "10-8-6-15"}]}, {"day": "Fri", "muscle": "Hams / Upper Back / Lats / Biceps", "exercises": [{"name": "Seated Leg Curl", "sets": 4, "reps": "10-8-6-15"}, {"name": "Chest-Supported T-Bar Row", "sets": 4, "reps": "10-8-6-15"}, {"name": "Shoulder-Width Pronated Lat Pulldown", "sets": 4, "reps": "10-8-6-15"}, {"name": "Barbell Curls", "sets": 4, "reps": "10-8-6-15"}, {"name": "Bent Over Laterals", "sets": 4, "reps": "10-8-6-15"}, {"name": "Cable Reverse Curls", "sets": 4, "reps": "10-8-6-15"}, {"name": "Cable Narrow Grip Upright Row", "sets": 4, "reps": "10-8-6-15"}]}]}], [{"week": 5, "rest": "60 sec", "cardio": "Wed/Sat: 30 min Z2 + 6 min intervals (15s/45s)", "days": [{"day": "Mon", "muscle": "Quads / Pecs / Delts / Tris", "exercises": [{"name": "Hack Squat Machine", "sets": 6, "reps": "6"}, {"name": "Incline DB Press", "sets": 6, "reps": "6"}, {"name": "Shoulder-Width Long Pull", "sets": 6, "reps": "6"}, {"name": "Dips", "sets": 6, "reps": "6"}, {"name": "DB Lateral Raises", "sets": 6, "reps": "6"}, {"name": "Seated Cable Flies", "sets": 6, "reps": "6"}, {"name": "Overhead Cable Triceps Extension", "sets": 6, "reps": "6"}]}, {"day": "Tue", "muscle": "Hams / Upper Back / Lats / Biceps", "exercises": [{"name": "Romanian Deadlift", "sets": 6, "reps": "6"}, {"name": "Seated Row to Clavicle (rope)", "sets": 6, "reps": "6"}, {"name": "Race Bike Rows", "sets": 6, "reps": "6"}, {"name": "Preacher Curls", "sets": 6, "reps": "6"}, {"name": "Straight-Arms Pulldown", "sets": 6, "reps": "6"}, {"name": "DB Hammer Curls", "sets": 6, "reps": "6"}, {"name": "DB Shrugs", "sets": 6, "reps": "6"}]}, {"day": "Thu", "muscle": "Quads / Pecs / Delts / Tris", "exercises": [{"name": "Leg Extension", "sets": 6, "reps": "6"}, {"name": "DB Power Flies", "sets": 6, "reps": "6"}, {"name": "Scott Press", "sets": 6, "reps": "6"}, {"name": "Close-Grip Bench Press", "sets": 6, "reps": "6"}, {"name": "Gironda Lateral Swing", "sets": 6, "reps": "6"}, {"name": "Cable Cross-Over", "sets": 6, "reps": "6"}, {"name": "Rope Triceps Pressdown", "sets": 6, "reps": "6"}]}, {"day": "Fri", "muscle": "Hams / Upper Back / Lats / Biceps", "exercises": [{"name": "Seated Leg Curl", "sets": 6, "reps": "6"}, {"name": "Chest-Supported T-Bar Row", "sets": 6, "reps": "6"}, {"name": "Shoulder-Width Pronated Lat Pulldown", "sets": 6, "reps": "6"}, {"name": "Barbell Curls", "sets": 6, "reps": "6"}, {"name": "Cable Reverse Curls", "sets": 6, "reps": "6"}, {"name": "Bent Over Laterals", "sets": 6, "reps": "6"}, {"name": "Cable Narrow Grip Upright Row", "sets": 6, "reps": "6"}]}]}, {"week": 6, "rest": "45 sec", "cardio": "Wed/Sat: 30 min Z2 + 7 min intervals (15s/45s)", "days": [{"day": "Mon", "muscle": "Quads / Pecs / Delts / Tris", "exercises": [{"name": "Hack Squat Machine", "sets": 6, "reps": "6"}, {"name": "Incline DB Press", "sets": 6, "reps": "6"}, {"name": "Shoulder-Width Long Pull", "sets": 6, "reps": "6"}, {"name": "Dips", "sets": 6, "reps": "6"}, {"name": "DB Lateral Raises", "sets": 6, "reps": "6"}, {"name": "Seated Cable Flies", "sets": 6, "reps": "6"}, {"name": "Overhead Cable Triceps Extension", "sets": 6, "reps": "6"}]}, {"day": "Tue", "muscle": "Hams / Upper Back / Lats / Biceps", "exercises": [{"name": "Romanian Deadlift", "sets": 6, "reps": "6"}, {"name": "Seated Row to Clavicle (rope)", "sets": 6, "reps": "6"}, {"name": "Race Bike Rows", "sets": 6, "reps": "6"}, {"name": "Preacher Curls", "sets": 6, "reps": "6"}, {"name": "Straight-Arms Pulldown", "sets": 6, "reps": "6"}, {"name": "DB Hammer Curls", "sets": 6, "reps": "6"}, {"name": "DB Shrugs", "sets": 6, "reps": "6"}]}, {"day": "Thu", "muscle": "Quads / Pecs / Delts / Tris", "exercises": [{"name": "Leg Extension", "sets": 6, "reps": "6"}, {"name": "DB Power Flies", "sets": 6, "reps": "6"}, {"name": "Scott Press", "sets": 6, "reps": "6"}, {"name": "Close-Grip Bench Press", "sets": 6, "reps": "6"}, {"name": "Gironda Lateral Swing", "sets": 6, "reps": "6"}, {"name": "Cable Cross-Over", "sets": 6, "reps": "6"}, {"name": "Rope Triceps Pressdown", "sets": 6, "reps": "6"}]}, {"day": "Fri", "muscle": "Hams / Upper Back / Lats / Biceps", "exercises": [{"name": "Seated Leg Curl", "sets": 6, "reps": "6"}, {"name": "Chest-Supported T-Bar Row", "sets": 6, "reps": "6"}, {"name": "Shoulder-Width Pronated Lat Pulldown", "sets": 6, "reps": "6"}, {"name": "Barbell Curls", "sets": 6, "reps": "6"}, {"name": "Cable Reverse Curls", "sets": 6, "reps": "6"}, {"name": "Bent Over Laterals", "sets": 6, "reps": "6"}, {"name": "Cable Narrow Grip Upright Row", "sets": 6, "reps": "6"}]}]}, {"week": 7, "rest": "30 sec", "cardio": "Wed/Sat: 30 min Z2 + 8 min intervals (15s/45s)", "days": [{"day": "Mon", "muscle": "Quads / Pecs / Delts / Tris", "exercises": [{"name": "Hack Squat Machine", "sets": 6, "reps": "6"}, {"name": "Incline DB Press", "sets": 6, "reps": "6"}, {"name": "Shoulder-Width Long Pull", "sets": 6, "reps": "6"}, {"name": "Dips", "sets": 6, "reps": "6"}, {"name": "DB Lateral Raises", "sets": 6, "reps": "6"}, {"name": "Seated Cable Flies", "sets": 6, "reps": "6"}, {"name": "Overhead Cable Triceps Extension", "sets": 6, "reps": "6"}]}, {"day": "Tue", "muscle": "Hams / Upper Back / Lats / Biceps", "exercises": [{"name": "Romanian Deadlift", "sets": 6, "reps": "6"}, {"name": "Seated Row to Clavicle (rope)", "sets": 6, "reps": "6"}, {"name": "Race Bike Rows", "sets": 6, "reps": "6"}, {"name": "Preacher Curls", "sets": 6, "reps": "6"}, {"name": "Straight-Arms Pulldown", "sets": 6, "reps": "6"}, {"name": "DB Hammer Curls", "sets": 6, "reps": "6"}, {"name": "DB Shrugs", "sets": 6, "reps": "6"}]}, {"day": "Thu", "muscle": "Quads / Pecs / Delts / Tris", "exercises": [{"name": "Leg Extension", "sets": 6, "reps": "6"}, {"name": "DB Power Flies", "sets": 6, "reps": "6"}, {"name": "Scott Press", "sets": 6, "reps": "6"}, {"name": "Close-Grip Bench Press", "sets": 6, "reps": "6"}, {"name": "Gironda Lateral Swing", "sets": 6, "reps": "6"}, {"name": "Cable Cross-Over", "sets": 6, "reps": "6"}, {"name": "Rope Triceps Pressdown", "sets": 6, "reps": "6"}]}, {"day": "Fri", "muscle": "Hams / Upper Back / Lats / Biceps", "exercises": [{"name": "Seated Leg Curl", "sets": 6, "reps": "6"}, {"name": "Chest-Supported T-Bar Row", "sets": 6, "reps": "6"}, {"name": "Shoulder-Width Pronated Lat Pulldown", "sets": 6, "reps": "6"}, {"name": "Barbell Curls", "sets": 6, "reps": "6"}, {"name": "Cable Reverse Curls", "sets": 6, "reps": "6"}, {"name": "Bent Over Laterals", "sets": 6, "reps": "6"}, {"name": "Cable Narrow Grip Upright Row", "sets": 6, "reps": "6"}]}]}, {"week": 8, "rest": "20 sec", "cardio": "Wed/Sat: 30 min Z2 + 9 min intervals (15s/45s)", "days": [{"day": "Mon", "muscle": "Quads / Pecs / Delts / Tris", "exercises": [{"name": "Hack Squat Machine", "sets": 6, "reps": "6"}, {"name": "Incline DB Press", "sets": 6, "reps": "6"}, {"name": "Shoulder-Width Long Pull", "sets": 6, "reps": "6"}, {"name": "Dips", "sets": 6, "reps": "6"}, {"name": "DB Lateral Raises", "sets": 6, "reps": "6"}, {"name": "Seated Cable Flies", "sets": 6, "reps": "6"}, {"name": "Overhead Cable Triceps Extension", "sets": 6, "reps": "6"}]}, {"day": "Tue", "muscle": "Hams / Upper Back / Lats / Biceps", "exercises": [{"name": "Romanian Deadlift", "sets": 6, "reps": "6"}, {"name": "Seated Row to Clavicle (rope)", "sets": 6, "reps": "6"}, {"name": "Race Bike Rows", "sets": 6, "reps": "6"}, {"name": "Preacher Curls", "sets": 6, "reps": "6"}, {"name": "Straight-Arms Pulldown", "sets": 6, "reps": "6"}, {"name": "DB Hammer Curls", "sets": 6, "reps": "6"}, {"name": "DB Shrugs", "sets": 6, "reps": "6"}]}, {"day": "Thu", "muscle": "Quads / Pecs / Delts / Tris", "exercises": [{"name": "Leg Extension", "sets": 6, "reps": "6"}, {"name": "DB Power Flies", "sets": 6, "reps": "6"}, {"name": "Scott Press", "sets": 6, "reps": "6"}, {"name": "Close-Grip Bench Press", "sets": 6, "reps": "6"}, {"name": "Gironda Lateral Swing", "sets": 6, "reps": "6"}, {"name": "Cable Cross-Over", "sets": 6, "reps": "6"}, {"name": "Rope Triceps Pressdown", "sets": 6, "reps": "6"}]}, {"day": "Fri", "muscle": "Hams / Upper Back / Lats / Biceps", "exercises": [{"name": "Seated Leg Curl", "sets": 6, "reps": "6"}, {"name": "Chest-Supported T-Bar Row", "sets": 6, "reps": "6"}, {"name": "Shoulder-Width Pronated Lat Pulldown", "sets": 6, "reps": "6"}, {"name": "Barbell Curls", "sets": 6, "reps": "6"}, {"name": "Cable Reverse Curls", "sets": 6, "reps": "6"}, {"name": "Bent Over Laterals", "sets": 6, "reps": "6"}, {"name": "Cable Narrow Grip Upright Row", "sets": 6, "reps": "6"}]}]}], [{"week": 9, "rest": "40 sec / 2 min after circuit", "cardio": "Tue/Sun: 20 min Z2 + 10 min intervals (30s/30s) \u00b7 Thu: 45 min Z2", "days": [{"day": "Mon", "muscle": "Peripheral Heart Action Circuit", "exercises": [{"name": "A1 \u2013 DB Lateral Raise", "sets": 6, "reps": "6-8"}, {"name": "A2 \u2013 Romanian Deadlift", "sets": 6, "reps": "6-8"}, {"name": "A3 \u2013 DB Power Flies", "sets": 6, "reps": "6-8"}, {"name": "A4 \u2013 DB Alternating Lunges", "sets": 6, "reps": "6-8"}, {"name": "A5 \u2013 Bent Over Row", "sets": 6, "reps": "6-8"}, {"name": "A6 \u2013 Single DB Overhead Triceps Ext", "sets": 6, "reps": "6-8"}, {"name": "A7 \u2013 Standing Calf Raises", "sets": 6, "reps": "6-8"}, {"name": "A8 \u2013 DB Alternating Curls", "sets": 6, "reps": "6-8"}]}, {"day": "Wed", "muscle": "Peripheral Heart Action Circuit", "exercises": [{"name": "A1 \u2013 DB Lateral Raise", "sets": 6, "reps": "6-8"}, {"name": "A2 \u2013 Romanian Deadlift", "sets": 6, "reps": "6-8"}, {"name": "A3 \u2013 DB Power Flies", "sets": 6, "reps": "6-8"}, {"name": "A4 \u2013 DB Alternating Lunges", "sets": 6, "reps": "6-8"}, {"name": "A5 \u2013 Bent Over Row", "sets": 6, "reps": "6-8"}, {"name": "A6 \u2013 Single DB Overhead Triceps Ext", "sets": 6, "reps": "6-8"}, {"name": "A7 \u2013 Standing Calf Raises", "sets": 6, "reps": "6-8"}, {"name": "A8 \u2013 DB Alternating Curls", "sets": 6, "reps": "6-8"}]}, {"day": "Fri", "muscle": "Peripheral Heart Action Circuit", "exercises": [{"name": "A1 \u2013 DB Lateral Raise", "sets": 6, "reps": "6-8"}, {"name": "A2 \u2013 Romanian Deadlift", "sets": 6, "reps": "6-8"}, {"name": "A3 \u2013 DB Power Flies", "sets": 6, "reps": "6-8"}, {"name": "A4 \u2013 DB Alternating Lunges", "sets": 6, "reps": "6-8"}, {"name": "A5 \u2013 Bent Over Row", "sets": 6, "reps": "6-8"}, {"name": "A6 \u2013 Single DB Overhead Triceps Ext", "sets": 6, "reps": "6-8"}, {"name": "A7 \u2013 Standing Calf Raises", "sets": 6, "reps": "6-8"}, {"name": "A8 \u2013 DB Alternating Curls", "sets": 6, "reps": "6-8"}]}]}, {"week": 10, "rest": "30 sec / 2 min", "cardio": "Tue/Sun: 20 min Z2 + 12 min intervals (30s/30s) \u00b7 Thu: 50 min Z2", "days": [{"day": "Mon", "muscle": "Peripheral Heart Action Circuit", "exercises": [{"name": "A1 \u2013 DB Lateral Raise", "sets": 6, "reps": "6-8"}, {"name": "A2 \u2013 Romanian Deadlift", "sets": 6, "reps": "6-8"}, {"name": "A3 \u2013 DB Power Flies", "sets": 6, "reps": "6-8"}, {"name": "A4 \u2013 DB Alternating Lunges", "sets": 6, "reps": "6-8"}, {"name": "A5 \u2013 Bent Over Row", "sets": 6, "reps": "6-8"}, {"name": "A6 \u2013 Single DB Overhead Triceps Ext", "sets": 6, "reps": "6-8"}, {"name": "A7 \u2013 Standing Calf Raises", "sets": 6, "reps": "6-8"}, {"name": "A8 \u2013 DB Alternating Curls", "sets": 6, "reps": "6-8"}]}, {"day": "Wed", "muscle": "Peripheral Heart Action Circuit", "exercises": [{"name": "A1 \u2013 DB Lateral Raise", "sets": 6, "reps": "6-8"}, {"name": "A2 \u2013 Romanian Deadlift", "sets": 6, "reps": "6-8"}, {"name": "A3 \u2013 DB Power Flies", "sets": 6, "reps": "6-8"}, {"name": "A4 \u2013 DB Alternating Lunges", "sets": 6, "reps": "6-8"}, {"name": "A5 \u2013 Bent Over Row", "sets": 6, "reps": "6-8"}, {"name": "A6 \u2013 Single DB Overhead Triceps Ext", "sets": 6, "reps": "6-8"}, {"name": "A7 \u2013 Standing Calf Raises", "sets": 6, "reps": "6-8"}, {"name": "A8 \u2013 DB Alternating Curls", "sets": 6, "reps": "6-8"}]}, {"day": "Fri", "muscle": "Peripheral Heart Action Circuit", "exercises": [{"name": "A1 \u2013 DB Lateral Raise", "sets": 6, "reps": "6-8"}, {"name": "A2 \u2013 Romanian Deadlift", "sets": 6, "reps": "6-8"}, {"name": "A3 \u2013 DB Power Flies", "sets": 6, "reps": "6-8"}, {"name": "A4 \u2013 DB Alternating Lunges", "sets": 6, "reps": "6-8"}, {"name": "A5 \u2013 Bent Over Row", "sets": 6, "reps": "6-8"}, {"name": "A6 \u2013 Single DB Overhead Triceps Ext", "sets": 6, "reps": "6-8"}, {"name": "A7 \u2013 Standing Calf Raises", "sets": 6, "reps": "6-8"}, {"name": "A8 \u2013 DB Alternating Curls", "sets": 6, "reps": "6-8"}]}]}, {"week": 11, "rest": "20 sec / 2 min", "cardio": "Tue/Sun: 20 min Z2 + 14 min intervals (30s/30s) \u00b7 Thu: 55 min Z2", "days": [{"day": "Mon", "muscle": "Peripheral Heart Action Circuit", "exercises": [{"name": "A1 \u2013 DB Lateral Raise", "sets": 6, "reps": "6-8"}, {"name": "A2 \u2013 Romanian Deadlift", "sets": 6, "reps": "6-8"}, {"name": "A3 \u2013 DB Power Flies", "sets": 6, "reps": "6-8"}, {"name": "A4 \u2013 DB Alternating Lunges", "sets": 6, "reps": "6-8"}, {"name": "A5 \u2013 Bent Over Row", "sets": 6, "reps": "6-8"}, {"name": "A6 \u2013 Single DB Overhead Triceps Ext", "sets": 6, "reps": "6-8"}, {"name": "A7 \u2013 Standing Calf Raises", "sets": 6, "reps": "6-8"}, {"name": "A8 \u2013 DB Alternating Curls", "sets": 6, "reps": "6-8"}]}, {"day": "Wed", "muscle": "Peripheral Heart Action Circuit", "exercises": [{"name": "A1 \u2013 DB Lateral Raise", "sets": 6, "reps": "6-8"}, {"name": "A2 \u2013 Romanian Deadlift", "sets": 6, "reps": "6-8"}, {"name": "A3 \u2013 DB Power Flies", "sets": 6, "reps": "6-8"}, {"name": "A4 \u2013 DB Alternating Lunges", "sets": 6, "reps": "6-8"}, {"name": "A5 \u2013 Bent Over Row", "sets": 6, "reps": "6-8"}, {"name": "A6 \u2013 Single DB Overhead Triceps Ext", "sets": 6, "reps": "6-8"}, {"name": "A7 \u2013 Standing Calf Raises", "sets": 6, "reps": "6-8"}, {"name": "A8 \u2013 DB Alternating Curls", "sets": 6, "reps": "6-8"}]}, {"day": "Fri", "muscle": "Peripheral Heart Action Circuit", "exercises": [{"name": "A1 \u2013 DB Lateral Raise", "sets": 6, "reps": "6-8"}, {"name": "A2 \u2013 Romanian Deadlift", "sets": 6, "reps": "6-8"}, {"name": "A3 \u2013 DB Power Flies", "sets": 6, "reps": "6-8"}, {"name": "A4 \u2013 DB Alternating Lunges", "sets": 6, "reps": "6-8"}, {"name": "A5 \u2013 Bent Over Row", "sets": 6, "reps": "6-8"}, {"name": "A6 \u2013 Single DB Overhead Triceps Ext", "sets": 6, "reps": "6-8"}, {"name": "A7 \u2013 Standing Calf Raises", "sets": 6, "reps": "6-8"}, {"name": "A8 \u2013 DB Alternating Curls", "sets": 6, "reps": "6-8"}]}]}, {"week": 12, "rest": "15 sec / 2 min", "cardio": "Tue/Sun: 20 min Z2 + 15 min intervals (30s/30s) \u00b7 Thu: 60 min Z2", "days": [{"day": "Mon", "muscle": "Peripheral Heart Action Circuit", "exercises": [{"name": "A1 \u2013 DB Lateral Raise", "sets": 6, "reps": "6-8"}, {"name": "A2 \u2013 Romanian Deadlift", "sets": 6, "reps": "6-8"}, {"name": "A3 \u2013 DB Power Flies", "sets": 6, "reps": "6-8"}, {"name": "A4 \u2013 DB Alternating Lunges", "sets": 6, "reps": "6-8"}, {"name": "A5 \u2013 Bent Over Row", "sets": 6, "reps": "6-8"}, {"name": "A6 \u2013 Single DB Overhead Triceps Ext", "sets": 6, "reps": "6-8"}, {"name": "A7 \u2013 Standing Calf Raises", "sets": 6, "reps": "6-8"}, {"name": "A8 \u2013 DB Alternating Curls", "sets": 6, "reps": "6-8"}]}, {"day": "Wed", "muscle": "Peripheral Heart Action Circuit", "exercises": [{"name": "A1 \u2013 DB Lateral Raise", "sets": 6, "reps": "6-8"}, {"name": "A2 \u2013 Romanian Deadlift", "sets": 6, "reps": "6-8"}, {"name": "A3 \u2013 DB Power Flies", "sets": 6, "reps": "6-8"}, {"name": "A4 \u2013 DB Alternating Lunges", "sets": 6, "reps": "6-8"}, {"name": "A5 \u2013 Bent Over Row", "sets": 6, "reps": "6-8"}, {"name": "A6 \u2013 Single DB Overhead Triceps Ext", "sets": 6, "reps": "6-8"}, {"name": "A7 \u2013 Standing Calf Raises", "sets": 6, "reps": "6-8"}, {"name": "A8 \u2013 DB Alternating Curls", "sets": 6, "reps": "6-8"}]}, {"day": "Fri", "muscle": "Peripheral Heart Action Circuit", "exercises": [{"name": "A1 \u2013 DB Lateral Raise", "sets": 6, "reps": "6-8"}, {"name": "A2 \u2013 Romanian Deadlift", "sets": 6, "reps": "6-8"}, {"name": "A3 \u2013 DB Power Flies", "sets": 6, "reps": "6-8"}, {"name": "A4 \u2013 DB Alternating Lunges", "sets": 6, "reps": "6-8"}, {"name": "A5 \u2013 Bent Over Row", "sets": 6, "reps": "6-8"}, {"name": "A6 \u2013 Single DB Overhead Triceps Ext", "sets": 6, "reps": "6-8"}, {"name": "A7 \u2013 Standing Calf Raises", "sets": 6, "reps": "6-8"}, {"name": "A8 \u2013 DB Alternating Curls", "sets": 6, "reps": "6-8"}]}]}]];
+
+const REST = {1:"2 min active (walk during rest)",2:"90 sec active",3:"75 sec active",4:"60 sec active",5:"60 sec",6:"45 sec",7:"30 sec",8:"20 sec",9:"40 sec / 2 min after circuit",10:"30 sec / 2 min",11:"20 sec / 2 min",12:"15 sec / 2 min"};
+const CARDIO = {1:"Wed/Sat: 30 min Zone 2",2:"Wed/Sat: 35 min Zone 2",3:"Wed/Sat: 40 min Zone 2",4:"Wed/Sat: 45 min Zone 2",5:"Wed/Sat: 30 min Z2 + 6 min intervals (15s/45s)",6:"Wed/Sat: 30 min Z2 + 7 min intervals (15s/45s)",7:"Wed/Sat: 30 min Z2 + 8 min intervals (15s/45s)",8:"Wed/Sat: 30 min Z2 + 9 min intervals (15s/45s)",9:"Tue/Sun: 20 min Z2 + 10 min intervals (30s/30s) · Thu: 45 min Z2",10:"Tue/Sun: 20 min Z2 + 12 min intervals (30s/30s) · Thu: 50 min Z2",11:"Tue/Sun: 20 min Z2 + 14 min intervals (30s/30s) · Thu: 55 min Z2",12:"Tue/Sun: 20 min Z2 + 15 min intervals (30s/30s) · Thu: 60 min Z2"};
+
+// ── State ──
+let curBlock=0, curWeek=1, curDay='Mon';
+let nutrDate = todayStr();
+let chartInst = null;
+
+function todayStr(){const d=new Date();return d.toISOString().slice(0,10);}
+
+// ── Storage helpers ──
+const ls = {
+  set:(k,v)=>{try{localStorage.setItem(k,v);}catch(e){}},
+  get:(k)=>{try{return localStorage.getItem(k)||'';}catch(e){return '';}},
+  del:(k)=>{try{localStorage.removeItem(k);}catch(e){}}
+};
+
+function wKey(week,day,ei,si,f){return `md_w${week}_${day}_e${ei}_s${si}_${f}`;}
+function nKey(date,f){return `md_n_${date}_${f}`;}
+
+// ── Derived helpers ──
+function getWeekData(week){
+  for(const b of BLOCKS) for(const w of b) if(w.week===week) return w;
+  return null;
+}
+function getDayData(week,day){
+  const w=getWeekData(week); if(!w) return null;
+  return w.days.find(d=>d.day===day)||null;
+}
+function blockOf(week){return week<=4?0:week<=8?1:2;}
+
+function isExDone(week,day,ei,sets){
+  return Array.from({length:sets},(_,si)=>ls.get(wKey(week,day,ei,si,'reps')).trim()!=='').every(Boolean);
+}
+function isDayDone(week,day){
+  const d=getDayData(week,day); if(!d) return false;
+  return d.exercises.every((ex,ei)=>isExDone(week,day,ei,ex.sets));
+}
+
+// ── WORKOUT RENDER ──
+function renderBlockTabs(){
+  document.getElementById('block-tabs').innerHTML=
+    ['Block 1 (Wk 1–4)','Block 2 (Wk 5–8)','Block 3 (Wk 9–12)'].map((l,i)=>
+      `<div class="btblock ${curBlock===i?'ab'+(i+1):''}" onclick="selBlock(${i})">${l}</div>`
+    ).join('');
+}
+function renderWeekBar(){
+  const weeks=[[1,2,3,4],[5,6,7,8],[9,10,11,12]][curBlock];
+  const days=curBlock<2?['Mon','Tue','Thu','Fri']:['Mon','Wed','Fri'];
+  document.getElementById('week-bar').innerHTML=weeks.map(w=>{
+    const allDone=days.every(d=>isDayDone(w,d));
+    return `<div class="wbtn ${curWeek===w?'active':''}" onclick="selWeek(${w})">${w}${allDone?'<span class="wdot"></span>':''}</div>`;
+  }).join('');
+}
+function renderDayTabs(){
+  const days=curBlock<2?['Mon','Tue','Thu','Fri']:['Mon','Wed','Fri'];
+  document.getElementById('day-tabs').innerHTML=days.map(d=>{
+    const done=isDayDone(curWeek,d);
+    return `<div class="dtab ${curDay===d?'active':''} ${done&&curDay!==d?'done-day':''}" onclick="selDay('${d}')">${d}${done?' ✓':''}</div>`;
+  }).join('');
+}
+function renderInfoBar(){
+  const w=getWeekData(curWeek);
+  document.getElementById('info-bar').innerHTML=
+    `<strong>Rest:</strong> ${REST[curWeek]} &nbsp;·&nbsp; <strong>Cardio:</strong> ${CARDIO[curWeek]}`;
+}
+function renderExList(){
+  const d=getDayData(curWeek,curDay);
+  if(!d){document.getElementById('ex-list').innerHTML='<div style="padding:20px;color:var(--text2);text-align:center">No session today</div>';return;}
+  let html='';
+  d.exercises.forEach((ex,ei)=>{
+    const done=isExDone(curWeek,curDay,ei,ex.sets);
+    const doneSets=Array.from({length:ex.sets},(_,si)=>ls.get(wKey(curWeek,curDay,ei,si,'reps')).trim()!=='').filter(Boolean).length;
+    const pct=Math.round(doneSets/ex.sets*100);
+    const repLabel=ex.reps==='10-8-6-15'?'10, 8, 6, 15':ex.reps;
+    html+=`<div class="ex-card ${done?'done':''}" id="ec-${ei}">
+      <div class="ex-hdr" onclick="toggleSets(${ei})">
+        <div>
+          <div class="ex-name">${ex.name}</div>
+          <div class="ex-meta">${ex.sets} sets · ${repLabel} reps</div>
+        </div>
+        <div class="ex-check ${done?'ok':''}" id="ck-${ei}">${done?'✓':''}</div>
+      </div>
+      <div class="pbar"><div class="pbar-fill" id="pf-${ei}" style="width:${pct}%"></div></div>
+      <div class="sets-wrap" id="sw-${ei}">
+        <div class="set-col-hdrs"><div></div><div class="set-col-hdr">weight</div><div class="set-col-hdr">reps done</div></div>`;
+    for(let si=0;si<ex.sets;si++){
+      const wt=ls.get(wKey(curWeek,curDay,ei,si,'wt'));
+      const rp=ls.get(wKey(curWeek,curDay,ei,si,'reps'));
+      const tgt=ex.reps==='10-8-6-15'?['10','8','6','15'][si]:ex.reps;
+      html+=`<div class="set-row">
+        <div class="set-num">${si+1}</div>
+        <input class="set-inp ${wt?'filled':''}" type="number" inputmode="decimal" placeholder="lbs/kg" value="${wt}"
+          onchange="saveSet(${ei},${si},'wt',this)" oninput="this.classList.toggle('filled',this.value.trim()!=='')">
+        <input class="set-inp ${rp?'filled':''}" type="number" inputmode="decimal" placeholder="${tgt}" value="${rp}"
+          onchange="saveSet(${ei},${si},'reps',this)" oninput="this.classList.toggle('filled',this.value.trim()!=='')">
+      </div>`;
+    }
+    html+=`</div></div>`;
+  });
+  document.getElementById('ex-list').innerHTML=html;
+}
+
+function toggleSets(ei){
+  const sw=document.getElementById(`sw-${ei}`);
+  if(sw) sw.style.display=sw.style.display==='none'?'':'none';
+}
+
+function saveSet(ei,si,field,input){
+  ls.set(wKey(curWeek,curDay,ei,si,field),input.value.trim());
+  refreshEx(ei);
+  renderWeekBar();renderDayTabs();
+}
+
+function refreshEx(ei){
+  const d=getDayData(curWeek,curDay); if(!d) return;
+  const ex=d.exercises[ei];
+  const done=isExDone(curWeek,curDay,ei,ex.sets);
+  const doneSets=Array.from({length:ex.sets},(_,si)=>ls.get(wKey(curWeek,curDay,ei,si,'reps')).trim()!=='').filter(Boolean).length;
+  const pct=Math.round(doneSets/ex.sets*100);
+  const card=document.getElementById(`ec-${ei}`);
+  if(card){card.classList.toggle('done',done);}
+  const ck=document.getElementById(`ck-${ei}`);
+  if(ck){ck.className='ex-check '+(done?'ok':'');ck.textContent=done?'✓':'';}
+  const pf=document.getElementById(`pf-${ei}`);
+  if(pf) pf.style.width=pct+'%';
+}
+
+function selBlock(i){
+  curBlock=i;curWeek=[[1,2,3,4],[5,6,7,8],[9,10,11,12]][i][0];
+  curDay=i<2?'Mon':'Mon';
+  renderWorkout();
+  document.getElementById('nav-sub').textContent=`Block ${i+1} · Week ${curWeek}`;
+}
+function selWeek(w){curWeek=w;renderWeekBar();renderDayTabs();renderInfoBar();renderExList();document.getElementById('nav-sub').textContent=`Block ${blockOf(w)+1} · Week ${w}`;}
+function selDay(d){curDay=d;renderDayTabs();renderExList();}
+
+function renderWorkout(){renderBlockTabs();renderWeekBar();renderDayTabs();renderInfoBar();renderExList();}
+
+// ── NUTRITION ──
+function shiftNutrDay(n){
+  const d=new Date(nutrDate+'T12:00:00');
+  d.setDate(d.getDate()+n);
+  nutrDate=d.toISOString().slice(0,10);
+  renderNutr();
+}
+function renderNutr(){
+  const d=new Date(nutrDate+'T12:00:00');
+  const isToday=nutrDate===todayStr();
+  document.getElementById('nutr-date-lbl').textContent=isToday?'Today':d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+  const fields=['weight','pro','car','fat','water','notes'];
+  fields.forEach(f=>{
+    const el=document.getElementById(`n-${f}`);
+    const v=ls.get(nKey(nutrDate,f));
+    el.value=v;
+    if(f!=='notes') el.classList.toggle('filled',v!=='');
+  });
+  updateMacroDisplay();
+  const junk=ls.get(nKey(nutrDate,'junk'))==='1';
+  const tog=document.getElementById('junk-toggle');
+  tog.className='toggle-track '+(junk?'on':'off');
+}
+function onNutrInput(el){el.classList.toggle('filled',el.value.trim()!=='');updateMacroDisplay();}
+function saveNutr(){
+  ['weight','pro','car','fat','water','notes'].forEach(f=>{
+    const v=document.getElementById(`n-${f}`).value.trim();
+    if(v) ls.set(nKey(nutrDate,f),v); else ls.del(nKey(nutrDate,f));
+  });
+  updateMacroDisplay();
+}
+function toggleJunk(){
+  const tog=document.getElementById('junk-toggle');
+  const cur=ls.get(nKey(nutrDate,'junk'))==='1';
+  ls.set(nKey(nutrDate,'junk'),cur?'0':'1');
+  tog.className='toggle-track '+(cur?'off':'on');
+}
+function updateMacroDisplay(){
+  const p=parseFloat(document.getElementById('n-pro').value)||0;
+  const c=parseFloat(document.getElementById('n-car').value)||0;
+  const f=parseFloat(document.getElementById('n-fat').value)||0;
+  const cal=p*4+c*4+f*9;
+  document.getElementById('m-cal').textContent=cal>0?Math.round(cal):'—';
+  document.getElementById('m-pro').textContent=p||'—';
+  document.getElementById('m-car').textContent=c||'—';
+  document.getElementById('m-fat').textContent=f||'—';
+}
+
+// ── PROGRESS ──
+function renderProgress(){
+  // Stats
+  let sessTotal=0,sessDone=0,exTotal=0,exDone=0;
+  BLOCKS.forEach(block=>block.forEach(weekObj=>{
+    weekObj.days.forEach(dayObj=>{
+      sessTotal++;
+      const allEx=dayObj.exercises.every((ex,ei)=>isExDone(weekObj.week,dayObj.day,ei,ex.sets));
+      if(allEx&&dayObj.exercises.length>0) sessDone++;
+      dayObj.exercises.forEach((ex,ei)=>{exTotal++;if(isExDone(weekObj.week,dayObj.day,ei,ex.sets))exDone++;});
+    });
+  }));
+  const pct=exTotal>0?Math.round(exDone/exTotal*100):0;
+  document.getElementById('prog-stats').innerHTML=`
+    <div class="pstat"><div class="pstat-val">${sessDone}</div><div class="pstat-lbl">Sessions done</div></div>
+    <div class="pstat"><div class="pstat-val">${pct}%</div><div class="pstat-lbl">Program complete</div></div>
+    <div class="pstat"><div class="pstat-val">${exDone}</div><div class="pstat-lbl">Exercises logged</div></div>
+    <div class="pstat"><div class="pstat-val">${exTotal-exDone}</div><div class="pstat-lbl">Remaining</div></div>
+  `;
+
+  // Weight chart — collect all daily weight entries
+  const wEntries=[];
+  for(let i=0;i<84;i++){
+    const d=new Date(); d.setDate(d.getDate()-83+i);
+    const ds=d.toISOString().slice(0,10);
+    const w=ls.get(nKey(ds,'weight'));
+    wEntries.push({date:ds,weight:w?parseFloat(w):null});
+  }
+  const hasData=wEntries.some(e=>e.weight!==null);
+  const labels=wEntries.map(e=>{const d=new Date(e.date+'T12:00:00');return (d.getMonth()+1)+'/'+(d.getDate());});
+  const values=wEntries.map(e=>e.weight);
+
+  if(chartInst){chartInst.destroy();chartInst=null;}
+  const ctx=document.getElementById('weight-chart').getContext('2d');
+  chartInst=new Chart(ctx,{
+    type:'line',
+    data:{labels,datasets:[{data:values,borderColor:'#e8453c',borderWidth:2,pointRadius:values.map(v=>v?3:0),pointBackgroundColor:'#e8453c',tension:0.3,spanGaps:true,fill:false}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.parsed.y} lbs/kg`}}},scales:{x:{ticks:{maxTicksLimit:8,color:'#50506a',font:{size:10}},grid:{color:'rgba(255,255,255,0.04)'}},y:{ticks:{color:'#50506a',font:{size:10}},grid:{color:'rgba(255,255,255,0.06)'}}}}
+  });
+  if(!hasData){
+    ctx.font='13px -apple-system';ctx.fillStyle='#50506a';ctx.textAlign='center';
+    ctx.fillText('Log your weight in Nutrition to see your chart',ctx.canvas.width/2,90);
+  }
+
+  // Top lifts
+  const KEY_LIFTS=['Hack Squat Machine','Romanian Deadlift','Incline DB Press','Barbell Curls','Close-Grip Bench Press','Leg Extension','Dips'];
+  const rows=KEY_LIFTS.map(name=>{
+    let best=null;
+    BLOCKS.forEach(block=>block.forEach(weekObj=>{
+      weekObj.days.forEach(dayObj=>{
+        dayObj.exercises.forEach((ex,ei)=>{
+          if(ex.name!==name) return;
+          for(let si=0;si<ex.sets;si++){
+            const v=parseFloat(ls.get(wKey(weekObj.week,dayObj.day,ei,si,'wt')));
+            if(!isNaN(v)&&(best===null||v>best)) best=v;
+          }
+        });
+      });
+    }));
+    return {name,best};
+  }).filter(r=>r.best!==null);
+
+  document.getElementById('lift-table').innerHTML=rows.length===0
+    ?'<tr><td colspan="2" style="color:var(--text3);padding:16px;text-align:center">Log workouts to see your best lifts</td></tr>'
+    :'<tr><th>Exercise</th><th style="text-align:right">Best</th></tr>'+rows.map(r=>`<tr><td>${r.name}</td><td>${r.best} lbs/kg</td></tr>`).join('');
+}
+
+// ── GUIDE ──
+function renderGuide(){
+  const blocks=[
+    {title:'Block 1 — Active Rest Density (Weeks 1–4)',color:'var(--red)',items:['4 lifting days: Mon / Tue / Thu / Fri','4 sets · 10-8-6-15 rep scheme','Set of 6 is your 6RM. Set of 10 = 60% of that. Set of 8 = 80%. Set of 15 = same as set of 10.','Rest periods start at 2 min and shrink each week — walk on a treadmill during rest','Cardio: Wed/Sat Zone 2, increasing each week']},
+    {title:'Block 2 — High-Density Sets / Gironda (Weeks 5–8)',color:'var(--blue)',items:['Same 4 lifting days','6 sets of 6 — weight stays the same as rest shrinks (that IS the progression)','Rest drops from 60 sec → 20 sec across the block','Cardio: Zone 2 + intervals added each week']},
+    {title:'Block 3 — Peripheral Heart Action Circuit (Weeks 9–12)',color:'var(--green)',items:['3 lifting days: Mon / Wed / Fri','8-exercise full-body circuit — alternating distant muscle groups','6 sets of 6-8 reps · Rest between stations 40→15 sec','Cardio: Tue/Thu/Sun — Zone 2 + increasing intervals']},
+  ];
+  const rules=['Eat only real food — no processed junk, no sauces, no sweeteners','Protein ≥ 1g per lb of bodyweight. Prefer whole sources: eggs, beef, fish, chicken','Train short and hard — 45 minutes, high density, perfect form','Walk daily — 10,000 steps minimum, move as a lifestyle','Sleep deeply — recovery dictates results','No cheat days, no breaks. Discipline is the secret.'];
+  document.getElementById('guide-content').innerHTML=
+    blocks.map(b=>`<div style="background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:12px">
+      <div style="font-size:15px;font-weight:700;color:${b.color};margin-bottom:10px">${b.title}</div>
+      ${b.items.map(i=>`<div style="font-size:13px;color:var(--text2);line-height:1.6;padding:3px 0;border-bottom:1px solid var(--border)">${i}</div>`).join('')}
+    </div>`).join('')+
+    `<div style="background:var(--s1);border:1px dashed rgba(240,180,41,.35);border-radius:var(--r);padding:14px;margin-bottom:12px">
+      <div style="font-size:14px;font-weight:700;color:var(--yellow);margin-bottom:10px">Nutrition rules</div>
+      ${rules.map(r=>`<div style="font-size:13px;color:var(--text2);line-height:1.6;padding:4px 0;border-bottom:1px solid var(--border)">${r}</div>`).join('')}
+    </div>
+    <div style="background:var(--s2);border-radius:var(--rs);padding:12px;font-size:12px;color:var(--text3);margin-bottom:12px;line-height:1.6">
+      <strong style="color:var(--text2)">Add to iPhone home screen:</strong> Open in Safari → tap Share ↑ → "Add to Home Screen"
+    </div>`;
+}
+
+// ── SCREEN SWITCHING ──
+function showScreen(name){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.btab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  document.getElementById('tab-'+name).classList.add('active');
+  if(name==='nutrition') renderNutr();
+  if(name==='progress')  renderProgress();
+  if(name==='guide')     renderGuide();
+}
+
+function showResetConfirm(){
+  if(!confirm(`Clear all logged data for ${curDay}, Week ${curWeek}?`)) return;
+  const d=getDayData(curWeek,curDay); if(!d) return;
+  d.exercises.forEach((ex,ei)=>{
+    for(let si=0;si<ex.sets;si++){
+      ls.del(wKey(curWeek,curDay,ei,si,'wt'));
+      ls.del(wKey(curWeek,curDay,ei,si,'reps'));
+    }
+  });
+  renderWorkout();
+}
+
+// ── INIT ──
+renderWorkout();
+</script>
+</body>
+</html>
